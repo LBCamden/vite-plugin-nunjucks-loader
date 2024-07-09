@@ -1,0 +1,23 @@
+{
+  "name": "vite-plugin-nunjucks-loader",
+  "type": "module",
+  "version": "0.1.0",
+  "description": "Bundle nunjucks templates and load them from js code",
+  "main": "index.js",
+  "scripts": {
+    "build": "vite build",
+    "test": "cd tests && node --test"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "esbuild": "^0.23.0",
+    "escape-string-regexp": "^5.0.0",
+    "glob": "^11.0.0",
+    "nunjucks": "^3.2.4",
+    "path-webpack": "^0.0.3"
+  },
+  "devDependencies": {
+    "vite": "^5.3.3"
+  }
+}
