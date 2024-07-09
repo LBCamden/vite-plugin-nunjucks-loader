@@ -3,21 +3,21 @@ import { defineConfig } from "vite";
 export default defineConfig({
   resolve: {
     alias: {
-      'nunjucks': "nunjucks/browser/nunjucks-slim"
+      nunjucks: "nunjucks/browser/nunjucks-slim",
     },
   },
   define: {
-    window: "globalThis"
+    window: "globalThis",
   },
   build: {
     rollupOptions: {
-      external: [/^node:/]
+      external: [/^node:/],
     },
-    outDir: "dist",
+    outDir: "runtime-dist",
     lib: {
       fileName: "bundle",
       entry: "./runtime/runtime.js",
-      formats: ["es"]
-    }
-  }
-})
+      formats: ["es"],
+    },
+  },
+});

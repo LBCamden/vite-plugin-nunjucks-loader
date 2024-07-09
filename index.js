@@ -6,7 +6,7 @@ import { transform } from "esbuild";
 import { glob } from "glob";
 
 const DIRNAME = path.dirname(new URL(import.meta.url).pathname);
-const RUNTIME = path.resolve(DIRNAME, "./dist/bundle.js");
+const RUNTIME = path.resolve(DIRNAME, "./runtime-dist/bundle.js");
 const NJK_SHIM = "virtual:njk-serverless";
 const RESOLVED_NJK_SHIM = "\0" + NJK_SHIM;
 
