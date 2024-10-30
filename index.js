@@ -38,13 +38,15 @@ export default function nunjucksLoader({
       if (id === NJK_SHIM) {
         return RESOLVED_NJK_SHIM;
       }
+
+      return null;
     },
 
     async load(id) {
       if (id === RESOLVED_NJK_SHIM) {
         for (const templateDir of templates) {
           for (const src of await glob(`${templateDir}/**/*.njk`)) {
-            this.addWatchFile(src);
+            this.addWatchFile(path.resolve(src));
           }
         }
 
@@ -82,11 +84,13 @@ export default function nunjucksLoader({
           ${transformRes.code}
         `;
       }
+
+      return null;
     },
 
     async transform(code, id) {
-      if (!filter(id) || !id.endsWith(".njk")) {
-        return;
+      if (!filter(id) || !isNunjucksFile(id)) {
+        return null;
       }
 
       const output = [
@@ -98,7 +102,7 @@ export default function nunjucksLoader({
         const absDir = path.resolve(dir);
 
         if (id.startsWith(absDir)) {
-          const templateName = path.relative(process.cwd(), id);
+          const templateName = trimNunjucksPath(id);
           output.push(
             `export default (ctx) => render(${JSON.stringify(
               templateName
@@ -108,10 +112,14 @@ export default function nunjucksLoader({
           return output.join(";\n");
         }
       }
+
+      this.error(
+        `No template directory matches ${id}. Have you configured your 'templates' setting correctly on the nunjucks loader?`
+      );
     },
 
     async handleHotUpdate({ server, file, modules, timestamp }) {
-      if (!file.endsWith(".njk")) {
+      if (!isNunjucksFile(file)) {
         return modules;
       }
 
@@ -128,4 +136,14 @@ export default function nunjucksLoader({
   };
 
   return component;
+}
+
+const NJ_REGEXP = /\.njk(\?.+)?$/;
+
+function isNunjucksFile(path) {
+  return NJ_REGEXP.test(path);
+}
+
+function trimNunjucksPath(p) {
+  return path.relative(process.cwd(), p.replace(NJ_REGEXP, ".njk"));
 }
