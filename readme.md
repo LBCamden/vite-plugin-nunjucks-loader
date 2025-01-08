@@ -7,6 +7,9 @@ Adds nunjucks templates to your app bundle so that you can import and run them f
 - Supports importing macros from node_modules
 - Supports custom filters (async and sync)
 
+> [!WARNING]  
+> This plugin is in early stage development and may be subject to breaking change.
+
 ## Use case
 
 You have a library of design system components written in nunjucks that you'd like to use in a modern web stack. This plugin allows you to:
