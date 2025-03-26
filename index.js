@@ -16,9 +16,11 @@ const RESOLVED_NJK_SHIM = "\0" + NJK_SHIM;
  *
  * @param {{
  *  templates: string[],
+ *  templates: string[],
  *  include?: import('vite').FilterPattern,
- *   filters?: Record<string, string>,
- *   exclude?: import('vite').FilterPattern,
+ *  filters?: Record<string, string>,
+ *  exclude?: import('vite').FilterPattern,
+ *  decorators?: string[],
  * }} options
  * @returns { import('vite').Plugin }
  */
@@ -27,6 +29,7 @@ export default function nunjucksLoader({
   include = [],
   filters = [],
   exclude = [],
+  decorators = [],
 }) {
   var filter = createFilter(include, exclude);
 
@@ -95,7 +98,12 @@ export default function nunjucksLoader({
 
       const output = [
         `import "${NJK_SHIM}"`,
-        `import render from "${RUNTIME}"`,
+        `import createRender from "${RUNTIME}"`,
+        decorators.map(
+          (d, i) => `import decorator${i} from "${path.resolve(d)}"`
+        ),
+
+        `const decorators = [${decorators.map((_, i) => `decorator${i}`)}]`,
       ];
 
       for (const dir of templates) {
@@ -104,9 +112,9 @@ export default function nunjucksLoader({
         if (id.startsWith(absDir)) {
           const templateName = trimNunjucksPath(id);
           output.push(
-            `export default (ctx) => render(${JSON.stringify(
+            `export default createRender(${JSON.stringify(
               templateName
-            )}, ctx)`
+            )}, decorators)`
           );
 
           return output.join(";\n");

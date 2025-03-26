@@ -13,7 +13,7 @@ export const filters = {};
  * @param {string} templatePath
  * @param {*} context
  */
-export default function renderTemplate(templatePath, context) {
+export function renderTemplate(templatePath, context) {
   const env = new njk.Environment(loader);
 
   for (const [name, filter] of Object.entries(filters)) {
@@ -26,4 +26,23 @@ export default function renderTemplate(templatePath, context) {
       else resolve(res);
     })
   );
+}
+
+/**
+ *
+ * @typedef {(args: {}) => string} Template
+ * @typedef {(template: Template) => Template} TemplateDecorator
+ *
+ * @param {string} templatePath
+ * @param {TemplateDecorator[]} decorators
+ * @returns {Template}
+ */
+export default function createRender(path, decorators) {
+  let render = (ctx) => renderTemplate(path, ctx);
+
+  for (const decorate of decorators) {
+    render = decorate(render);
+  }
+
+  return render;
 }
