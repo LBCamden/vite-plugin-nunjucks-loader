@@ -3,8 +3,7 @@ import njk from "nunjucks";
 import { createFilter } from "vite";
 import escapeStringRegexp from "escape-string-regexp";
 import { transform } from "esbuild";
-import { glob } from "glob";
-import { realpathSync } from "fs";
+import { realpathSync, globSync } from "fs";
 
 const DIRNAME = path.dirname(new URL(import.meta.url).pathname);
 const RUNTIME = path.resolve(DIRNAME, "./runtime-dist/bundle.js");
@@ -68,7 +67,7 @@ export default function nunjucksLoader({
     async load(id) {
       if (id === RESOLVED_NJK_SHIM) {
         for (const templateDir of templates) {
-          for (const src of await glob(`${templateDir}/**/*.njk`, { cwd })) {
+          for (const src of globSync(`${templateDir}/**/*.njk`, { cwd })) {
             this.addWatchFile(path.resolve(src));
           }
         }
