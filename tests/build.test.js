@@ -1,12 +1,13 @@
 import { test } from "node:test";
 import assert from "node:assert";
+import path from "node:path";
 import { build } from "vite";
 
 import nunjucksLoader from "../index.js";
 
 test("renders nunjucks template", async () => {
   const myTemplate = await buildAndEval({
-    entry: "fixtures/views/hello-world.njk",
+    entry: "fixtures/included/views/hello-world.njk",
   });
   const html = await myTemplate({ name: "world" });
 
@@ -15,7 +16,7 @@ test("renders nunjucks template", async () => {
 
 test("resolves absolute import", async () => {
   const myTemplate = await buildAndEval({
-    entry: "fixtures/views/header-macro.njk",
+    entry: "fixtures/included/views/header-macro.njk",
   });
   const html = await myTemplate({ content: "Header content" });
 
@@ -24,7 +25,7 @@ test("resolves absolute import", async () => {
 
 test("resolves relative import", async () => {
   const myTemplate = await buildAndEval({
-    entry: "fixtures/views/header-macro-relative.njk",
+    entry: "fixtures/included/views/header-macro-relative.njk",
   });
   const html = await myTemplate({ content: "Header content" });
 
@@ -33,7 +34,7 @@ test("resolves relative import", async () => {
 
 test("applies sync filters", async () => {
   const myTemplate = await buildAndEval({
-    entry: "fixtures/views/custom-filter.njk",
+    entry: "fixtures/included/views/custom-filter.njk",
     filters: { customFilter: "fixtures/extensions/sync-uppercase.js" },
   });
   const html = await myTemplate({
@@ -45,8 +46,10 @@ test("applies sync filters", async () => {
 
 test("applies async filters", async () => {
   const myTemplate = await buildAndEval({
-    entry: "fixtures/views/custom-filter.njk",
-    filters: { customFilter: "fixtures/extensions/async-uppercase.js" },
+    entry: "fixtures/included/views/custom-filter.njk",
+    filters: {
+      customFilter: "fixtures/extensions/async-uppercase.js",
+    },
   });
   const html = await myTemplate({
     content: "hello",
@@ -55,18 +58,37 @@ test("applies async filters", async () => {
   assert.equal(html, "HELLO");
 });
 
+test("traverses symlinks when imported from nunjucks", async () => {
+  const myTemplate = await buildAndEval({
+    entry: "fixtures/included/views/include-symlink.njk",
+  });
+  const html = await myTemplate();
+
+  assert.equal(html, "Hello, symlinks!");
+});
+
+test("traverses symlinks when imported from js", async () => {
+  const myTemplate = await buildAndEval({
+    entry: "fixtures/symlink-target/includer.njk",
+  });
+  const html = await myTemplate();
+
+  assert.equal(html, "Hello, symlinks!");
+});
+
 async function buildAndEval({ entry, ...opts }) {
   const res = await build({
     plugins: [
       nunjucksLoader({
-        templates: ["fixtures"],
+        cwd: import.meta.dirname,
+        templates: ["fixtures/included", "fixtures/symlink-src"],
         ...opts,
       }),
     ],
     build: {
       write: false,
       lib: {
-        entry,
+        entry: path.resolve(import.meta.dirname, entry),
         formats: ["cjs"],
       },
     },
@@ -75,7 +97,12 @@ async function buildAndEval({ entry, ...opts }) {
   const [{ code }] = res[0].output;
 
   const renderFn = new Function(
-    `const exports = {}; const module = {exports}; ${code}; return module.exports;`
+    `const exports = {};
+    const module = {exports};
+    
+    ${code};
+    
+    return module.exports;`,
   )();
   return (params) => renderFn(params).then((html) => html.trim());
 }

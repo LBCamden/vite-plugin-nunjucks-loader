@@ -3,9 +3,19 @@ import "./polyfill";
 import njk from "nunjucks";
 import { adaptFilter } from "./util";
 
-const loader = new njk.PrecompiledLoader();
-
 export const filters = {};
+export const resolveMap = {};
+
+function remapPath(name) {
+  for (const key in resolveMap) {
+    if (name.startsWith(key)) {
+      const mapped = resolveMap[key] + name.substring(key.length);
+      return mapped;
+    }
+  }
+
+  return name;
+}
 
 /**
  *
@@ -14,17 +24,17 @@ export const filters = {};
  * @param {*} context
  */
 export function renderTemplate(templatePath, context) {
-  const env = new njk.Environment(loader);
+  const env = new njk.Environment(new njk.PrecompiledLoader());
 
   for (const [name, filter] of Object.entries(filters)) {
     env.addFilter(name, adaptFilter(filter), true);
   }
 
   return new Promise((resolve, reject) =>
-    env.render(templatePath, context, (err, res) => {
+    env.render(remapPath(templatePath), context, (err, res) => {
       if (err) reject(err);
       else resolve(res);
-    })
+    }),
   );
 }
 
