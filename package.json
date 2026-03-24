@@ -1,7 +1,11 @@
 {
-  "name": "vite-plugin-nunjucks-loader",
+  "name": "@lbcamden/vite-plugin-nunjucks-loader",
+  "files": [
+    "runtime-dist",
+    "index.js"
+  ],
   "type": "module",
-  "version": "0.1.0",
+  "version": "0.0.0",
   "description": "Bundle nunjucks templates and load them from js code",
   "main": "index.js",
   "scripts": {

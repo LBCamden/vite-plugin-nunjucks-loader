@@ -1,0 +1,41 @@
+name: Release Package
+on:
+  release:
+    types: [created]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      packages: write
+      contents: read
+    steps:
+      - uses: actions/checkout@v6.0.0
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4.2.0
+        with:
+          version: 10
+
+      - name: Setup node
+        uses: actions/setup-node@v6.0.0
+        with:
+          node-version-file: '.nvmrc'
+          cache: "pnpm"
+
+      - run: pnpm install
+        env:
+          NPM_TOKEN: ${{secrets.GITHUB_TOKEN}}
+
+      - run: pnpm build
+
+      - name: Run tests
+        run: pnpm test
+
+      - run: node .github/update-package-version.js
+        env:
+          GITHUB_RELEASE_TAG: ${{github.event.release.tag_name}}
+
+      - run: npm publish
+        env:
+          NPM_TOKEN: ${{secrets.GITHUB_TOKEN}}
