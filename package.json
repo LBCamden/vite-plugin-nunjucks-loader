@@ -14,10 +14,12 @@
   },
   "author": "",
   "license": "ISC",
-  "devDependencies": {
+  "dependencies": {
     "esbuild": "^0.27.4",
     "escape-string-regexp": "^5.0.0",
-    "nunjucks": "^3.2.4",
+    "nunjucks": "3.2.4"
+  },
+  "devDependencies": {
     "path-webpack": "^0.0.3",
     "vite": "^8.0.2"
   }
