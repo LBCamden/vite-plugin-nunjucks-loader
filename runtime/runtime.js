@@ -17,6 +17,19 @@ function remapPath(name) {
   return name;
 }
 
+let env;
+
+function getEnv() {
+  if (!env) {
+    env = new njk.Environment(new njk.PrecompiledLoader());
+
+    for (const [name, filter] of Object.entries(filters)) {
+      env.addFilter(name, adaptFilter(filter), true);
+    }
+  }
+  return env;
+}
+
 /**
  *
  *
@@ -24,14 +37,8 @@ function remapPath(name) {
  * @param {*} context
  */
 export function renderTemplate(templatePath, context) {
-  const env = new njk.Environment(new njk.PrecompiledLoader());
-
-  for (const [name, filter] of Object.entries(filters)) {
-    env.addFilter(name, adaptFilter(filter), true);
-  }
-
   return new Promise((resolve, reject) =>
-    env.render(remapPath(templatePath), context, (err, res) => {
+    getEnv().render(remapPath(templatePath), context, (err, res) => {
       if (err) reject(err);
       else resolve(res);
     }),
