@@ -22,6 +22,7 @@ const RESOLVED_NJK_SHIM = "\0" + NJK_SHIM;
  *  filters?: Record<string, string>,
  *  exclude?: import('vite').FilterPattern,
  *  decorators?: string[],
+ *  async?: boolean,
  * }} options
  * @returns { import('vite').Plugin }
  */
@@ -32,6 +33,7 @@ export default function nunjucksLoader({
   filters = [],
   exclude = [],
   decorators = [],
+  async = false,
 }) {
   const resolvedTemplateList = templates.flatMap((t) => {
     const mapped = realpathSync(path.resolve(cwd, t));
@@ -78,7 +80,7 @@ export default function nunjucksLoader({
         );
 
         for (const name of Object.keys(filters ?? {})) {
-          env.addFilter(name, () => {}, true);
+          env.addFilter(name, () => {}, async);
         }
 
         const jsTemplate = njk.precompile(cwd, {
@@ -100,8 +102,9 @@ export default function nunjucksLoader({
           .join("\n");
 
         return `
-          import { filters, resolveMap } from "${RUNTIME}";
+          import { filters, options, resolveMap } from "${RUNTIME}";
 
+          options.async = ${JSON.stringify(async)};
           Object.assign(resolveMap, ${JSON.stringify(inverseResolvedTemplates)});
 
           ${filterInclude}

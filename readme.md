@@ -5,7 +5,7 @@ Adds nunjucks templates to your app bundle so that you can import and run them f
 - Works in browsers and serverless environments (cloudflare workers, etc)
 - Supports relative and absolute path resolution (include, extends, import)
 - Supports importing macros from node_modules
-- Supports custom filters (async and sync)
+- Supports custom filters (sync by default, async with the `async` option)
 
 > [!WARNING]  
 > This plugin is in early stage development and may be subject to breaking change.
@@ -40,6 +40,10 @@ export default defineConfig({
       filters: {
         filterName: './path-to-filter.js',
       },
+      // Render through nunjucks' async API so filters can return promises. Off by default:
+      // async renders share one callback queue across requests, which hangs concurrent
+      // requests on Cloudflare Workers.
+      async: false,
     }),
   ]
 })

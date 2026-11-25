@@ -1,10 +1,11 @@
 import "./polyfill";
 
 import njk from "nunjucks";
-import { adaptFilter } from "./util";
+import { adaptFilter, syncFilter } from "./util";
 
 export const filters = {};
 export const resolveMap = {};
+export const options = { async: false };
 
 function remapPath(name) {
   for (const key in resolveMap) {
@@ -24,7 +25,8 @@ function getEnv() {
     env = new njk.Environment(new njk.PrecompiledLoader());
 
     for (const [name, filter] of Object.entries(filters)) {
-      env.addFilter(name, adaptFilter(filter), true);
+      if (options.async) env.addFilter(name, adaptFilter(filter), true);
+      else env.addFilter(name, syncFilter(name, filter));
     }
   }
   return env;
@@ -35,8 +37,17 @@ function getEnv() {
  *
  * @param {string} templatePath
  * @param {*} context
+ * @returns {Promise<string>}
  */
 export function renderTemplate(templatePath, context) {
+  // nunjucks delivers a callback render through one module-wide queue, flushed by a timer
+  // that whichever render queued first set. On Cloudflare Workers a request cannot wait on
+  // another request's timer, so concurrent renders are cancelled as hung. Synchronous
+  // renders need no callback, so they are the default.
+  if (!options.async) {
+    return new Promise((resolve) => resolve(getEnv().render(remapPath(templatePath), context)));
+  }
+
   return new Promise((resolve, reject) =>
     getEnv().render(remapPath(templatePath), context, (err, res) => {
       if (err) reject(err);
@@ -47,7 +58,7 @@ export function renderTemplate(templatePath, context) {
 
 /**
  *
- * @typedef {(args: {}) => string} Template
+ * @typedef {(args: {}) => Promise<string>} Template
  * @typedef {(template: Template) => Template} TemplateDecorator
  *
  * @param {string} templatePath

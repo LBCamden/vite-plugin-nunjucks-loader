@@ -15,3 +15,24 @@ export function adaptFilter(fn) {
     );
   }
 }
+
+/**
+ * Wrap a filter for synchronous rendering, failing clearly if it returns a promise.
+ *
+ * @param {string} name
+ * @param {*} fn
+ * @returns
+ */
+export function syncFilter(name, fn) {
+  return function () {
+    const res = fn(...arguments);
+
+    if (typeof res?.then === "function") {
+      throw new Error(
+        `Filter "${name}" returned a promise. Set async: true on the nunjucks loader to use async filters.`
+      );
+    }
+
+    return res;
+  }
+}
