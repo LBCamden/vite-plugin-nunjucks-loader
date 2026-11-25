@@ -44,18 +44,30 @@ test("applies sync filters", async () => {
   assert.equal(html, "HELLO");
 });
 
-test("applies async filters", async () => {
+test("applies async filters when async renders are enabled", async () => {
   const myTemplate = await buildAndEval({
     entry: "fixtures/included/views/custom-filter.njk",
     filters: {
       customFilter: "fixtures/extensions/async-uppercase.js",
     },
+    async: true,
   });
   const html = await myTemplate({
     content: "hello",
   });
 
   assert.equal(html, "HELLO");
+});
+
+test("rejects an async filter when async renders are not enabled", async () => {
+  const myTemplate = await buildAndEval({
+    entry: "fixtures/included/views/custom-filter.njk",
+    filters: {
+      customFilter: "fixtures/extensions/async-uppercase.js",
+    },
+  });
+
+  await assert.rejects(myTemplate({ content: "hello" }), /Set async: true/);
 });
 
 // On Cloudflare Workers a request cannot wait on a timer another request set: the runtime
