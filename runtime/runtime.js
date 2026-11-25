@@ -37,6 +37,14 @@ function getEnv() {
  * @param {*} context
  */
 export function renderTemplate(templatePath, context) {
+  // nunjucks delivers a callback render through one module-wide queue, flushed by a timer
+  // that whichever render queued first set. On Cloudflare Workers a request cannot wait on
+  // another request's timer, so concurrent renders were cancelled as hung. Without async
+  // filters the render is synchronous and needs no callback.
+  if (Object.keys(filters).length === 0) {
+    return new Promise((resolve) => resolve(getEnv().render(remapPath(templatePath), context)));
+  }
+
   return new Promise((resolve, reject) =>
     getEnv().render(remapPath(templatePath), context, (err, res) => {
       if (err) reject(err);

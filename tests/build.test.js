@@ -58,6 +58,24 @@ test("applies async filters", async () => {
   assert.equal(html, "HELLO");
 });
 
+// On Cloudflare Workers a request cannot wait on a timer another request set: the runtime
+// cancels it as hung. nunjucks' callback path flushes one shared queue from such a timer.
+test("renders without waiting on a timer", async (t) => {
+  const myTemplate = await buildAndEval({
+    entry: "fixtures/included/views/header-macro.njk",
+  });
+  t.mock.timers.enable({ apis: ["setTimeout", "setInterval", "setImmediate"] });
+
+  const timedOut = Symbol("waited on a timer");
+  const settleMicrotasks = async () => {
+    for (let i = 0; i < 100; i++) await null;
+    return timedOut;
+  };
+  const html = await Promise.race([myTemplate({ content: "Header content" }), settleMicrotasks()]);
+
+  assert.equal(html, "<header>Header content</header>");
+});
+
 test("traverses symlinks when imported from nunjucks", async () => {
   const myTemplate = await buildAndEval({
     entry: "fixtures/included/views/include-symlink.njk",
